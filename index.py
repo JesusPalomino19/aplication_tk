@@ -47,7 +47,11 @@ class producto:
 		self.arbol.heading("#0", text = "Nombre", anchor = CENTER)
 		self.arbol.heading("#1", text = "Precio", anchor = CENTER)
 
-		#Ejecutamos la obtencion de datos para obtenerlos en la tabla
+		#Botones de modificacion de productos existentes de la tabla
+		ttk.Button(text = "BORRAR", command = self.eliminar_productos).grid(row = 5, column = 0, sticky = W + E) 
+		ttk.Button(text = "	EDITAR").grid(row = 5, column = 1, sticky = W + E)
+
+		#Ejecutamos la obtencion de datos para llenar la tabla
 		self.obtener_productos()
 
 
@@ -93,6 +97,12 @@ class producto:
 		else:
 			self.mensaje["text"] = "Nombre y Precio son requeridos"
 		self.obtener_productos()
+
+	#Funcion para eliminacion de productos
+	def eliminar_productos(self):
+		print(self.arbol.item(self.arbol.selection()))
+		self.arbol.item(self.arbol.selection())
+
 
 #Arranque de aplicacion
 if __name__ == "__main__":
