@@ -131,9 +131,27 @@ class producto:
 		#Hacemos uso de TopLevel una ventana que se pondra encima de la que tenemos actualmente
 		self.ventana_edit = Toplevel()
 		self.ventana_edit.tittle = "Editar Producto"
-		Label(self.ventana_edit, text = "Nombre Anterior: ").grid(row = 0, column = 1)#Nombre Anterior
+		Label(self.ventana_edit, text = "Nombre Anterior: ").grid(row = 0, column = 1, sticky = W)#Nombre Anterior
 		Entry(self.ventana_edit, textvariable = StringVar(self.ventana_edit, value = nombre), state = "readonly").grid(row = 0, column = 2)
-		#1:10:42
+		Label(self.ventana_edit, text = "Nuevo Nombre: ").grid(row = 1, column = 1, sticky = W)#Nuevo Nombre
+		nuevo_nombre = Entry(self.ventana_edit)
+		nuevo_nombre.grid(row = 1, column = 2)
+		Label(self.ventana_edit, text = "Precio Anterior: ").grid(row = 2, column = 1, sticky = W)#Precio Anterior
+		Entry(self.ventana_edit, textvariable = StringVar(self.ventana_edit, value = precio_anterior), state = "readonly").grid(row = 2, column = 2)
+		Label(self.ventana_edit, text = "Nuevo Precio: ").grid(row = 3, column = 1, sticky = W)#Nuevo Precio
+		nuevo_precio = Entry(self.ventana_edit)
+		nuevo_precio.grid(row = 3, column = 2)
+		#Boton que se usara para actualizar datos
+		Button(self.ventana_edit, text = "Actualizar Datos", command = lambda: self.editar_datos(nuevo_nombre.get(), nombre, nuevo_precio.get(), precio_anterior)).grid(row = 4, column = 2, sticky = W + E)
+
+	#Funcion que permite editar datos guardados en la tabla
+	def editar_datos(self, nuevo_nombre, nombre, nuevo_precio, precio):
+		consulta = "UPDATE productos SET Nombre = ?, Precio = ? WHERE Nombre = ? AND Precio = ?"
+		parametros = (nuevo_nombre, nuevo_precio, nombre, precio)#Parametro que se pasan a la consulta
+		self.ejecuta_consulta(consulta, parametros)
+		self.ventana_edit.destroy()#Luego de haberse ejecutado la consulta se destruye el pop-up
+		self.mensaje["text"] = "Producto {} ha sido actualizado satisfactoriamente".format(nombre)#Se presenta un mensaje que señala que el producto se actualizo
+		self.obtener_productos()#Se cargan los datos(para mostrar el actualizado)
 
 #Arranque de aplicacion
 if __name__ == "__main__":
