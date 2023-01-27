@@ -185,3 +185,5 @@ if __name__ == "__main__":
 	ventana = Tk()
 	aplicacion = producto(ventana)
 	ventana.mainloop()  
+
+#Falta implementacion de busquedas...
