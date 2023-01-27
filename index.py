@@ -14,7 +14,7 @@ class producto:
 	def __init__(self, ventana):
 		self.vent = ventana
 		self.vent.title("Aplicacion de gestion de Productos")
-
+		self.vent.bind("<Return>", lambda event: self.agregar_productos())#Funcion Bind agregado a la ventana para que al presionar la tecla "Enter",  se accione el metodo agregar producto
 		#Creamos un contenedor
 		contenedor = LabelFrame(self.vent, text = "Registre un nuevo producto")
 		contenedor.grid(row = 0, column = 0, columnspan = 3, pady = 20)
@@ -48,12 +48,18 @@ class producto:
 		self.arbol.heading("#1", text = "Precio", anchor = CENTER)
 
 		#Botones de modificacion de productos existentes de la tabla
-		ttk.Button(text = "BORRAR", command = self.eliminar_productos).grid(row = 5, column = 0, sticky = W + E) 
-		ttk.Button(text = "	EDITAR", command = self.editar_producto).grid(row = 5, column = 1, sticky = W + E)
+		ttk.Button(text = "Eliminar Producto", command = self.eliminar_productos).grid(row = 5, column = 0, sticky = W + E) 
+		ttk.Button(text = "Editar Informacion", command = self.editar_producto).grid(row = 5, column = 1, sticky = W + E)
 
 		#Ejecutamos la obtencion de datos para llenar la tabla
 		self.obtener_productos()
+		self.vent.update()
 
+		#Forma de hacre que la ventana se genere en la mitad de cualquier pantalla
+		dimensiones_vent = (self.vent.winfo_reqwidth(), self.vent.winfo_reqheight())
+		dimensiones_pantalla = (self.vent.winfo_screenwidth(), self.vent.winfo_screenheight())
+		dimensiones_centro = (int((dimensiones_pantalla[0]-dimensiones_vent[0])/2), int((dimensiones_pantalla[1]-dimensiones_vent[1])/2))
+		self.vent.geometry("+" + str(dimensiones_centro[0]) + "+" + str(dimensiones_centro[1]))
 
 	#Funcion encargada del enlace a la base de datos
 	def ejecuta_consulta(self, consulta, parametros = ()):
@@ -71,22 +77,36 @@ class producto:
 		for elemento in guardados:
 			self.arbol.delete(elemento)
 		#Se obtienen los datos desde la base de datos
-		consulta = "SELECT * FROM productos ORDER BY nombre ASC"
+		consulta = "SELECT * FROM productos ORDER BY nombre DESC"
 		db_filas = self.ejecuta_consulta(consulta)
 		#Llenando los datos en la tabla
 		for fila in db_filas:
 			self.arbol.insert("", 0, text = fila[1], values = fila[2])
 
-	#Funcion que valida el ingreso de datos a la base de datos
+	#Funcion para corroborar si los valores estan llenos
+	def son_vacios(self):
+		return len(self.nombre.get()) != 0 and len(self.precio.get()) != 0
+
+	#Funcion para saber si el valor del precio es flotante
+	def es_flotante(self):
+		try:
+			float(self.precio.get())
+			return True
+		except ValueError:
+			return False
+
+
+	#Funcion que valida el ingreso correcto a la base de datos
 	def validacion(self):
-		return len(self.nombre.get()) != 0 and len(self.precio.get()) != 0		
+		son_numeros = str.isdigit(self.precio.get()) or self.es_flotante()#primero se evalua si el contenido es un numero, y el otro si es un flotante
+		return self.son_vacios() and son_numeros
 
 	#Funcion para agregar productos a la tabla
 	def agregar_productos(self):
 		#Usamos la funcion validacion
 		if self.validacion():
 			consulta = "INSERT INTO productos VALUES(NULL, ?, ?)"
-			parametros = (self.nombre.get(),self.precio.get())
+			parametros = (self.nombre.get(), self.precio.get())
 			self.ejecuta_consulta(consulta, parametros)
 			#Actualizamos el valor de texto que esta en la notificacion de modificacion
 			self.mensaje["text"] = "Producto {} fue agregado de manera correcta...".format(self.nombre.get())
@@ -94,8 +114,9 @@ class producto:
 			self.nombre.delete(0, END)
 			self.precio.delete(0, END)
 		else:
-			self.mensaje["text"] = "Nombre y Precio son requeridos"
+			self.mensaje["text"] = "Nombre y Precio(solo ingreso de numeros) son requeridos, "
 		self.obtener_productos()
+		self.nombre.focus()#Hacemos focus al nombre para seguir agregando datos si asi lo requiera el usuario
 
 	#Funcion para eliminacion de productos
 	def eliminar_productos(self):
@@ -131,7 +152,7 @@ class producto:
 		#Hacemos uso de TopLevel una ventana que se pondra encima de la que tenemos actualmente
 		self.ventana_edit = Toplevel()
 		self.ventana_edit.tittle = "Editar Producto"
-		Label(self.ventana_edit, text = "Nombre Anterior: ").grid(row = 0, column = 1, sticky = W)#Nombre Anterior
+		self.ventana_edit.bind("<Return>", lambda event: self.editar_datos(nuevo_nombre.get(), nombre, nuevo_precio.get(), precio_anterior))#Funcion para que la tecla "Enter" acione el boton		Label(self.ventana_edit, text = "Nombre Anterior: ").grid(row = 0, column = 1, sticky = W)#Nombre Anterior
 		Entry(self.ventana_edit, textvariable = StringVar(self.ventana_edit, value = nombre), state = "readonly").grid(row = 0, column = 2)
 		Label(self.ventana_edit, text = "Nuevo Nombre: ").grid(row = 1, column = 1, sticky = W)#Nuevo Nombre
 		nuevo_nombre = Entry(self.ventana_edit)
@@ -143,6 +164,11 @@ class producto:
 		nuevo_precio.grid(row = 3, column = 2)
 		#Boton que se usara para actualizar datos
 		Button(self.ventana_edit, text = "Actualizar Datos", command = lambda: self.editar_datos(nuevo_nombre.get(), nombre, nuevo_precio.get(), precio_anterior)).grid(row = 4, column = 2, sticky = W + E)
+		#Uso de metodo para que el pop-up se genere en el centro
+		dimensiones_ventana_edit = (self.ventana_edit.winfo_reqwidth(), self.ventana_edit.winfo_reqheight())
+		dimensiones_pantalla = (self.ventana_edit.winfo_screenwidth(), self.ventana_edit.winfo_screenheight())
+		dimensiones_centro = (int((dimensiones_pantalla[0]-dimensiones_ventana_edit[0])/2), int((dimensiones_pantalla[1]-dimensiones_ventana_edit[1])/2))
+		self.ventana_edit.geometry("+" + str(dimensiones_centro[0]) + "+" + str(dimensiones_centro[1]))
 
 	#Funcion que permite editar datos guardados en la tabla
 	def editar_datos(self, nuevo_nombre, nombre, nuevo_precio, precio):
@@ -159,3 +185,5 @@ if __name__ == "__main__":
 	ventana = Tk()
 	aplicacion = producto(ventana)
 	ventana.mainloop()  
+
+#Falta implementacion de busquedas...
